@@ -1,19 +1,18 @@
-
 @isTest
-private class TestNightyProcessor {
+private class ucl_TestNightlyProcessor {
     @isTest
     static void TestUpdateInsertLegalAdvisorAccount() {
         // Configurar un mock para simular la llamada HTTP
-        Test.setMock(HttpCalloutMock.class, new NightyProcessorMock());
+        Test.setMock(HttpCalloutMock.class, new ucl_NightyProcessorMock());
 
         // Iniciar el entorno de prueba
         Test.startTest();
 
-        // Instanciar NightyProcessor
-        NightyProcessor processor = new NightyProcessor();
+        // Instanciar ucl_NightyProcessor
+        ucl_NightlyProcessor processor = new  ucl_NightlyProcessor();
 
-        // Llamar al método makeGetCallout en la instancia
-        HttpResponse response = processor.makeGetCallout();
+        // Llamar al método herokuCall en la instancia
+        HttpResponse response = processor.herokuCall();
         Test.stopTest();
 
         // Verificar la respuesta HTTP
