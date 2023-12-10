@@ -1,5 +1,6 @@
 public with sharing class ucl_NightlyProcessor {
     @AuraEnabled
+    
     public static void herokuCall() {
         // Inicialización de variables
         Http http = new Http();
@@ -33,7 +34,7 @@ public with sharing class ucl_NightlyProcessor {
                                 asOfDate = Date.parse(asOfDateString);
                             } catch (Exception e) {
                                 System.debug('Error de fecha: ' + e.getMessage());
-                                
+
                                 // Si hay un error, asigna la fecha actual
                                 asOfDate = Date.today();
                             }

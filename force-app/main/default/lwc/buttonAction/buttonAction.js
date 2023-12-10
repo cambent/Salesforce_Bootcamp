@@ -5,17 +5,25 @@ import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 export default class ButtonAction extends LightningElement {
     clickedButtonLabel;
 
-
     handleClick(event) {
         this.clickedButtonLabel = event.target.label;
+
         ucl_NightlyProcessor()
             .then(result => {
+                // Log de éxito
+                console.log('Éxito', result);
+
+                // Mostrar mensaje de éxito
                 this.showToast('Éxito', 'Datos importados exitosamente desde Heroku', 'success');
             })
             .catch(error => {
-                this.showToast('Error', `Error al importar datos: ${error.body.message}`, 'error');
+                // Log de error
+                console.error('Error al importar datos:', error);
+
+                // Mostrar mensaje de error
+                const errorMessage = error.body ? error.body.message : 'Error desconocido';
+                this.showToast('Error', `Error al importar datos: ${errorMessage}`, 'error');
             });
-    }
     }
 
     showToast(title, message, variant) {
@@ -26,3 +34,4 @@ export default class ButtonAction extends LightningElement {
         });
         this.dispatchEvent(toastEvent);
     }
+}
