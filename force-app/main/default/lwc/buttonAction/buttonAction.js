@@ -3,8 +3,11 @@ import ucl_NightlyProcessor from '@salesforce/apex/ucl_NightlyProcessor.herokuCa
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
 
 export default class ButtonAction extends LightningElement {
+    clickedButtonLabel;
 
-    handleClick() {
+
+    handleClick(event) {
+        this.clickedButtonLabel = event.target.label;
         ucl_NightlyProcessor()
             .then(result => {
                 this.showToast('Éxito', 'Datos importados exitosamente desde Heroku', 'success');
@@ -12,6 +15,7 @@ export default class ButtonAction extends LightningElement {
             .catch(error => {
                 this.showToast('Error', `Error al importar datos: ${error.body.message}`, 'error');
             });
+    }
     }
 
     showToast(title, message, variant) {
@@ -22,4 +26,3 @@ export default class ButtonAction extends LightningElement {
         });
         this.dispatchEvent(toastEvent);
     }
-}

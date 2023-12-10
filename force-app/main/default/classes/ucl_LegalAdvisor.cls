@@ -4,7 +4,7 @@ public with sharing class ucl_LegalAdvisor {
     String status;
     Date asOfDate;
 
-//contructor
+//constructor
     public ucl_LegalAdvisor(String accountNumber, String accountName, String status, Date asOfDate) {
         this.accountName = accountName;
         this.accountNumber = accountNumber;

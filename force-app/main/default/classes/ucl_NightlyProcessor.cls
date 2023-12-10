@@ -20,7 +20,7 @@ public with sharing class ucl_NightlyProcessor {
                     String accountStatus = (String)legalAdvisorMap.get('AccountStatus');
 
                     if (accountStatus != null && accountStatus.equals('Enabled')) {
-                        Legal_Advisor__c legalAdvisorRecord = new Legal_Advisor__c();
+                        Legal_Advisor__c legalAdvisorData = new Legal_Advisor__c();
                         String accountNumber = (String)legalAdvisorMap.get('AccountNumber');
                         String accountName = (String)legalAdvisorMap.get('AccountName');
                         
@@ -33,17 +33,18 @@ public with sharing class ucl_NightlyProcessor {
                                 asOfDate = Date.parse(asOfDateString);
                             } catch (Exception e) {
                                 System.debug('Error de fecha: ' + e.getMessage());
+                                
                                 // Si hay un error, asigna la fecha actual
                                 asOfDate = Date.today();
                             }
                         }
 
-                        legalAdvisorRecord.Account_Number__c = accountNumber;
-                        legalAdvisorRecord.Account_Name__c = accountName;
-                        legalAdvisorRecord.Account_Status__c = accountStatus;
-                        legalAdvisorRecord.As_of_date__c = asOfDate;
+                        legalAdvisorData.Account_Number__c = accountNumber;
+                        legalAdvisorData.Account_Name__c = accountName;
+                        legalAdvisorData.Account_Status__c = accountStatus;
+                        legalAdvisorData.As_of_date__c = asOfDate;
 
-                        legalAdvisorsToUpsert.add(legalAdvisorRecord);
+                        legalAdvisorsToUpsert.add(legalAdvisorData);
                     }
 
                     // Manejo de la lista de clientes
@@ -72,8 +73,8 @@ public with sharing class ucl_NightlyProcessor {
 
                 // Realizar upsert de Legal Advisors
                 if (!legalAdvisorsToUpsert.isEmpty()) {
-                    upsert legalAdvisorsToUpsert Account_Number__c;
                 }
+                upsert legalAdvisorsToUpsert Account_Number__c;
 
                 // Realizar upsert de Clients
                 if (!clientsToUpsert.isEmpty()) {
