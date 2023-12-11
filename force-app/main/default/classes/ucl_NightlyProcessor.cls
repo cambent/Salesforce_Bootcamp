@@ -7,10 +7,10 @@ public with sharing class ucl_NightlyProcessor {
         HttpRequest request = new HttpRequest();
         request.setEndpoint('https://altimetrik-bootcamp.herokuapp.com/LegalAccounts');
         request.setMethod('GET');
+        HttpResponse response = http.send(request);
 
         try {
-            HttpResponse response = http.send(request);
-
+           
             if (response.getStatusCode() == 200) {
                 List<Object> legalAccountJSON = (List<Object>)JSON.deserializeUntyped(response.getBody());
                 List<Legal_Advisor__c> legalAdvisorsToUpsert = new List<Legal_Advisor__c>();
@@ -25,7 +25,7 @@ public with sharing class ucl_NightlyProcessor {
                         String accountNumber = (String)legalAdvisorMap.get('AccountNumber');
                         String accountName = (String)legalAdvisorMap.get('AccountName');
                         
-                        // Ajustar el formato de fecha a "MM/dd/yyyy"
+                        // Ajustar el formato de fecha
                         String asOfDateString = (String)legalAdvisorMap.get('AsOfDate');
                         Date asOfDate = null;
 
