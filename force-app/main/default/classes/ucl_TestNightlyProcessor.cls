@@ -1,21 +1,24 @@
 @isTest
 private class ucl_TestNightlyProcessor {
+
+    private class MockHttpCallout implements HttpCalloutMock {
+        public HttpResponse respond(HttpRequest req) {
+            HttpResponse res = new HttpResponse();
+            res.setStatusCode(200);
+            res.setBody('[{"AccountStatus": "Enabled", "AccountNumber": "123", "AccountName": "Test Account", "AsOfDate": "2023-01-01", "Clients": [{"FirstName": "John", "LastName": "Doe", "Email": "john.doe@example.com", "Phone": "123-456-7890", "Address": "123 Main St", "ClientNumber": "C123"}]}]');
+            return res;
+        }
+    }
+
     @isTest
-    static void TestUpdateInsertLegalAdvisorAccount() {
-        // Configurar un mock para simular la llamada HTTP
-        Test.setMock(HttpCalloutMock.class, new ucl_NightyProcessorMock());
+    static void testHerokuCall() {
+        // Configuramos el mock para la llamada HTTP
+        Test.setMock(HttpCalloutMock.class, new MockHttpCallout());
 
-        // Iniciar el entorno de prueba
+        // Llamamos al método que queremos probar
         Test.startTest();
-
-        // Instanciar ucl_NightyProcessor
-        ucl_NightlyProcessor processor = new  ucl_NightlyProcessor();
-
-        // Llamar al método herokuCall en la instancia
-        HttpResponse response = processor.herokuCall();
+        ucl_NightlyProcessor.herokuCall();
         Test.stopTest();
 
-        // Verificar la respuesta HTTP
-        System.assertEquals(200, response.getStatusCode(), 'La llamada HTTP no devolvió el código 200 OK');
     }
 }

@@ -155,7 +155,7 @@
     <externalSharingModel>ControlledByParent</externalSharingModel>
     <label>Client</label>
     <nameField>
-        <label>Client Name</label>
+        <label>First Name</label>
         <type>Text</type>
     </nameField>
     <pluralLabel>Clients</pluralLabel>

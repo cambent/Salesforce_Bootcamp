@@ -1,89 +1,118 @@
 public with sharing class ucl_NightlyProcessor {
-    @AuraEnabled
-    
-    public static HttpResponse herokuCall() {
-        Http http = new Http();
-        HttpRequest request = new HttpRequest();
-        request.setEndpoint('https://altimetrik-bootcamp.herokuapp.com/LegalAccounts');
-        request.setMethod('GET');
-        HttpResponse response = http.send(request);
-        
-        // Verificar si la solicitud fue exitosa y parsear la respuesta JSON
-        if (response.getStatusCode() == 200) {
-            List<Object> legalAccountJSONList = (List<Object>)JSON.deserializeUntyped(response.getBody());
-            List<Legal_Advisor__c> legalAdvisorToUpsert = new List<Legal_Advisor__c>();
-        
-            // Iterar sobre la lista de cuentas legales JSON
-            for (Object legalAccountJSON : legalAccountJSONList) {
-                Map<String, Object> legalAdvisorJSONMap = (Map<String, Object>)legalAccountJSON;
-                String accountStatus = (String)legalAdvisorJSONMap.get('AccountStatus');
-                String accountNumber = (String)legalAdvisorJSONMap.get('AccountNumber'); // Move the declaration outside the if block
-        
-                if (accountStatus != null && accountStatus.equals('Enabled')) {
-                    String accountName = (String)legalAdvisorJSONMap.get('AccountName');
-                    Date asOfDate;
-        
-                    try {
-                        asOfDate = Date.parse((String)legalAdvisorJSONMap.get('AsOfDate'));
-                    } catch (Exception e) {
-                        System.debug('Error de fecha: ' + e.getMessage());
-                        asOfDate = Date.today();
-                    }
-        
-                    Legal_Advisor__c legalAdvisor = new Legal_Advisor__c(
-                        Account_Number__c = accountNumber,
-                        Account_Name__c = accountName,
-                        Account_Status__c = accountStatus,
-                        As_Of_Date__c = asOfDate
-                    );
-        
-                    legalAdvisorToUpsert.add(legalAdvisor);
-                } else if (accountStatus.equals('Disabled')) {
-                    // Now you can use accountNumber here
-                    List<Legal_Advisor__c> legalAdvisors = [SELECT Id FROM Legal_Advisor__c WHERE Account_Number__c = :accountNumber LIMIT 1];
-        
-                    if (!legalAdvisors.isEmpty()) {
-                        Legal_Advisor__c legalAdvisor = legalAdvisors[0];
-                        legalAdvisor.Account_Status__c = accountStatus;
-        
-                        update legalAdvisor;
-                    }
-                }
-        
-                List<Object> clientList = (List<Object>)legalAdvisorJSONMap.get('Clients');
-                for(Object clientObj : clientList) {
-                    Map<String, Object> clientMap = (Map<String, Object>)clientObj;
-                    
-                    Client_c clientObj = insert new Client_c();
-                 clientObj Client_Number_c = (String) clientMap.get('ClientNumber');
-                    upsert clienttoUpsert Client_Number_c;
-                }
+  @AuraEnabled
+  public static void herokuCall() {
+    // Inicialización de variables
+    Http http = new Http();
+    HttpRequest request = new HttpRequest();
+    request.setEndpoint(
+      'https://altimetrik-bootcamp.herokuapp.com/LegalAccounts'
+    );
+    request.setMethod('GET');
+    HttpResponse response = http.send(request);
+
+    try {
+      if (response.getStatusCode() == 200) {
+        List<Object> legalAccountJSON = (List<Object>) JSON.deserializeUntyped(
+          response.getBody()
+        );
+        List<Legal_Advisor__c> legalAdvisorsToUpsert = new List<Legal_Advisor__c>();
+        List<Client__c> clientsToUpsert = new List<Client__c>();
+        String accountNumber;
+        for (Object legalAdvisorObj : legalAccountJSON) {
+          Map<String, Object> legalAdvisorMap = (Map<String, Object>) legalAdvisorObj;
+          String accountStatus = (String) legalAdvisorMap.get('AccountStatus');
+
+          if (accountStatus != null && accountStatus.equals('Enabled')) {
+            Legal_Advisor__c legalAdvisorData = new Legal_Advisor__c();
+            accountNumber = (String) legalAdvisorMap.get('AccountNumber');
+            String accountName = (String) legalAdvisorMap.get('AccountName');
+
+            // Ajustar el formato de fecha
+            String asOfDateString = (String) legalAdvisorMap.get('AsOfDate');
+            Date asOfDate = null;
+
+            if (asOfDateString != null) {
+              try {
+                asOfDate = Date.parse(asOfDateString);
+              } catch (Exception e) {
+                System.debug('Error de fecha: ' + e.getMessage());
+
+                // Si hay un error, asigna la fecha actual
+                asOfDate = Date.today();
+              }
             }
-        
-            // Realizar la operación de upsert después de la iteración
-            if (!legalAdvisorToUpsert.isEmpty()) {
-                upsert legalAdvisorToUpsert Account_Number__c;
+
+            legalAdvisorData.Account_Number__c = accountNumber;
+            legalAdvisorData.Account_Name__c = accountName;
+            legalAdvisorData.Account_Status__c = accountStatus;
+            legalAdvisorData.As_of_date__c = asOfDate;
+
+            legalAdvisorsToUpsert.add(legalAdvisorData);
+          }
+
+          // Manejo de la lista de clientes
+          List<Object> clientList = (List<Object>) legalAdvisorMap.get(
+            'Clients'
+          );
+          for (Object clientObj : clientList) {
+            Map<String, Object> clientMap = (Map<String, Object>) clientObj;
+
+            Client__c clientData = new Client__c();
+            clientData.Name = (String) clientMap.get('FirstName');
+            clientData.Last_Name__c = (String) clientMap.get('LastName');
+            clientData.Email__c = (String) clientMap.get('Email');
+            clientData.Phone__c = (String) clientMap.get('Phone');
+            clientData.Address__c = (String) clientMap.get('Address');
+            String clientNumber =
+              (String) clientMap.get('ClientNumber') + accountNumber;
+            clientData.Client_Number__c = clientNumber;
+            clientData.Account_Number__c = accountNumber;
+            //clientData.Legal_Advisor__c = accountNumber;
+            System.debug('CLiente ' + clientData);
+
+            // Verifica que la lista de Legal Advisors no esté vacía antes de asignar
+            if (!legalAdvisorsToUpsert.isEmpty()) {
+              Legal_Advisor__c legalAdvisorData = legalAdvisorsToUpsert[0];
+              clientData.Legal_Advisor__c = legalAdvisorData.Id;
+
+              clientsToUpsert.add(clientData);
+            } else {
+              System.debug(
+                'La lista de Legal Advisors para upsert está vacía.'
+              );
             }
-        
-            return response;
+          }
         }
 
-        public class ExecuteNightlyProcess implements Schedulable {
-            public void execute(SchedulableContext ctx) {
-            List<Legal_Advisor__c> legalAdvisors = [SELECT AccountNumber, AccountName, AccountStatus, AsOfDate FROM Legal_Advisor__c
-                                        WHERE IsClosed = False AND CloseDate < TODAY];
-
-// Create a task for each opportunity in the list
-TaskUtils.remindOwners(legalAdvisors);
-}
-}
-
-//Return Exist client
-
-private static Client_c returnExistingClient(String clientNumber){
-List<Client_c> existingClient = [SELECT  Client_Number_c, First_Name_c, Email_c, Phone_c, Address_c FROM Client_c = clientNumber LIMIT 1]
-}
-        
- }
-        
+        // Realizar upsert de Legal Advisors
+        if (!legalAdvisorsToUpsert.isEmpty()) {
+        }
+        upsert legalAdvisorsToUpsert Account_Number__c;
+        Map<String, Id> legalAdvisorMap = new Map<String, Id>();
+        for (Legal_Advisor__c legalAvisor : legalAdvisorsToUpsert) {
+          legalAdvisorMap.put(legalAvisor.Account_Number__c, legalAvisor.Id);
+        }
+        for (Client__c client : clientsToUpsert) {
+          client.Legal_Advisor__c = legalAdvisorMap.get(
+            client.Account_Number__c
+          );
+        }
+        System.debug('clientsToUpsert' + clientsToUpsert);
+        // Realizar upsert de Clients
+        if (!clientsToUpsert.isEmpty()) {
+          System.debug('Entro en el if');
+          //upsert clientsToUpsert Client_Number__c;
+          insert clientsToUpsert;
+        }
+      } else {
+        System.debug(
+          'La llamada HTTP no fue exitosa. Código de estado: ' +
+          response.getStatusCode()
+        );
+      }
+    } catch (Exception e) {
+      // Manejo de la excepción (puedes personalizar esto según tus necesidades)
+      System.debug('Error en la llamada HTTP: ' + e.getMessage());
+    }
+  }
 }
