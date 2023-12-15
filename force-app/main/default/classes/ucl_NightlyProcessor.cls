@@ -17,16 +17,14 @@ public with sharing class ucl_NightlyProcessor {
         );
         List<Legal_Advisor__c> legalAdvisorsToUpsert = new List<Legal_Advisor__c>();
         List<Client__c> clientsToUpsert = new List<Client__c>();
-
+        String accountNumber;
         for (Object legalAdvisorObj : legalAccountJSON) {
           Map<String, Object> legalAdvisorMap = (Map<String, Object>) legalAdvisorObj;
           String accountStatus = (String) legalAdvisorMap.get('AccountStatus');
 
           if (accountStatus != null && accountStatus.equals('Enabled')) {
             Legal_Advisor__c legalAdvisorData = new Legal_Advisor__c();
-            String accountNumber = (String) legalAdvisorMap.get(
-              'AccountNumber'
-            );
+            accountNumber = (String) legalAdvisorMap.get('AccountNumber');
             String accountName = (String) legalAdvisorMap.get('AccountName');
 
             // Ajustar el formato de fecha
@@ -65,9 +63,12 @@ public with sharing class ucl_NightlyProcessor {
             clientData.Email__c = (String) clientMap.get('Email');
             clientData.Phone__c = (String) clientMap.get('Phone');
             clientData.Address__c = (String) clientMap.get('Address');
-            clientData.Client_Number__c = (String) clientMap.get(
-              'ClientNumber'
-            );
+            String clientNumber =
+              (String) clientMap.get('ClientNumber') + accountNumber;
+            clientData.Client_Number__c = clientNumber;
+            clientData.Account_Number__c = accountNumber;
+            //clientData.Legal_Advisor__c = accountNumber;
+            System.debug('CLiente ' + clientData);
 
             // Verifica que la lista de Legal Advisors no esté vacía antes de asignar
             if (!legalAdvisorsToUpsert.isEmpty()) {
@@ -87,10 +88,21 @@ public with sharing class ucl_NightlyProcessor {
         if (!legalAdvisorsToUpsert.isEmpty()) {
         }
         upsert legalAdvisorsToUpsert Account_Number__c;
-
+        Map<String, Id> legalAdvisorMap = new Map<String, Id>();
+        for (Legal_Advisor__c legalAvisor : legalAdvisorsToUpsert) {
+          legalAdvisorMap.put(legalAvisor.Account_Number__c, legalAvisor.Id);
+        }
+        for (Client__c client : clientsToUpsert) {
+          client.Legal_Advisor__c = legalAdvisorMap.get(
+            client.Account_Number__c
+          );
+        }
+        System.debug('clientsToUpsert' + clientsToUpsert);
         // Realizar upsert de Clients
         if (!clientsToUpsert.isEmpty()) {
-          upsert clientsToUpsert Client_Number__c;
+          System.debug('Entro en el if');
+          //upsert clientsToUpsert Client_Number__c;
+          insert clientsToUpsert;
         }
       } else {
         System.debug(

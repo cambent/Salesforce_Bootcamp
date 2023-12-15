@@ -1,5 +1,5 @@
 import { LightningElement } from "lwc";
-import ucl_NightlyProcessor from "@salesforce/apex/ucl_NightlyProcessor.herokuCall";
+import herokuCall from "@salesforce/apex/ucl_NightlyProcessor.herokuCall";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
 
 export default class importDataButton extends LightningElement {
@@ -8,7 +8,7 @@ export default class importDataButton extends LightningElement {
   handleClick(event) {
     this.clickedButtonLabel = event.target.label;
 
-    ucl_NightlyProcessor()
+    herokuCall()
       .then((result) => {
         // Log de éxito
         console.log("Éxito", result);
